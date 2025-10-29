@@ -3,6 +3,8 @@
 #include <list>
 #include <fstream>
 #include <sstream>
+#include <limits>
+#include <cstdlib> 
 #include <chrono>
 #include <ctime>
 #include <algorithm>
@@ -10,6 +12,16 @@
 #include <locale>
 #include <iomanip>
 using namespace std;
+
+// Optional color codes for nicer console display
+#define RESET   "\033[0m"
+#define CYAN    "\033[36m"
+#define GREEN   "\033[32m"
+#define RED     "\033[31m"
+#define YELLOW  "\033[33m"
+#define BOLD    "\033[1m"
+
+
 
 class Logentry
 {
@@ -47,6 +59,7 @@ string getCurrentTimeString()
     return string(buf);
 }
 
+// rmeolve leading and trailing spaces from a string
 string trim(const string &s)
 {
     auto start = s.begin();
@@ -102,16 +115,28 @@ public:
         string line;
         while (getline(file, line))
         {
+            if(line.empty()) continue;      // is the file is empty then it will continue without crashing the code
             stringstream ss(line);
             string idStr, name, countStr, time;
             getline(ss, idStr, ',');
             getline(ss, name, ',');
             getline(ss, countStr, ',');
             getline(ss, time, ',');
+            
 
-            logs.push_back(Logentry(name, time));
+            //  this portions ensure if the file handling file is empty and have some spaces then the code wont crash  so we used try catch block
+            if (idStr.empty() || name.empty() || countStr.empty() || time.empty())
+        continue;
+            
+            try{
+                logs.push_back(Logentry(name, time));
             logs.back().id = stoi(idStr);
-            logs.back().count = stoi(countStr);
+            logs.back().count = stoi(countStr); 
+            }
+            catch(...)
+            {
+                cerr<<"Error loading record: "<<line<<"\n";
+            }
         }
 
         // Set the next index correctly
@@ -139,7 +164,7 @@ public:
                 lastLoggerName = log.name;
                 lastLoggerTime = timestr;
                 cout << "Welcome back, " << name << "! (ID: " << log.id << ")\n";
-                saveToFile("dataset.txt");
+                saveToFile("database.txt");
                 return;
             }
         }
@@ -149,7 +174,7 @@ public:
         lastLoggerName = name;
         lastLoggerTime = timestr;
         cout << "New user added: " << name << " (ID: " << logs.back().id << ")\n";
-        saveToFile("dataset.txt"); // 🔹 Save after each login
+        saveToFile("database.txt"); // 🔹 Save after each login
     }
 
     // showing options to the admin of all the users who have logged in
@@ -254,43 +279,62 @@ public:
 
 int main()
 {
-
     acesslist acl;
-    acl.loadFromFile("dataset.txt"); // 🔹 Load existing records
+    acl.loadFromFile("database.txt"); // 🔹 Load existing records
 
-    const string adminPassword = "password";
+    const string adminPassword = "akash";
 
-    // infinite loop for the menu until we break out of it by choosing exit option
     while (true)
     {
-        cout << "\nMain menu:\n"
-             << "1) User login\n"
-             << "2) Admin login\n"
-             << "3) Exit\n"
-             << "Choose: ";
+        system("cls"); // clear screen (works on Windows)
+        cout << CYAN << BOLD;
+        cout << "==============================================\n";
+        cout << "        ACCESS LOG AUDITOR SYSTEM\n";
+        cout << "==============================================\n" << RESET;
+
+        cout << YELLOW;
+        cout << left << setw(5) << " " << "1 User Login\n";
+        cout << left << setw(5) << " " << "2 Admin Login\n";
+        cout << left << setw(5) << " " << "3 Exit Program\n";
+        // cout << RESET;
+        cout << "----------------------------------------------\n";
+        cout << " Enter your choice (1-3): ";
 
         int choice;
         if (!(cin >> choice))
         {
+                // this part does that if user enters a character instead of number then it will not crash the code, it will remove the invalid input from the buffer and ask for input again
             cin.clear();
             string skip;
             getline(cin, skip);
-            cout << "Enter a valid number.\n";
+            
+
+
+            cout << RED << " Please enter a valid number.\n" << RESET;
+            // cin.get();
             continue;
         }
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear newline
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         if (choice == 1)
         {
-            cout << "Enter your name: ";
+            system("cls");
+            cout << GREEN << BOLD << "\n USER LOGIN\n" << RESET;
+            cout << "Enter your username: ";
             string name;
             getline(cin, name);
-            name = trim(name); // trim whitespace
+            name = trim(name);
             acl.login(name);
+
+            cout << GREEN << "\nLogin action recorded successfully.\n" << RESET;
+            // cout << "Press Enter to return to main menu...";
+            // cin.get(); 
         }
 
         else if (choice == 2)
         {
+            system("cls");
+            cout << CYAN << BOLD << "\n ADMIN LOGIN\n" << RESET;
             cout << "Enter admin password: ";
             string pass;
             cin >> pass;
@@ -298,62 +342,93 @@ int main()
 
             if (pass == adminPassword)
             {
+                cout << GREEN << " Access granted!\n" << RESET;
+                // cin.get(); // wait for Enter
+
                 while (true)
                 {
-                    cout << "\nAdmin menu:\n"
-                         << "a) Show all records\n"
-                         << "b) Most frequent user\n"
-                         << "c) Last logger\n"
-                         << "d) Search user by name\n"
-                         << "e) Back to main menu\n"
-                         << "Choose: ";
+                    
+                    cout << CYAN << BOLD;
+                    cout << "==============================================\n";
+                    cout << "                ADMIN DASHBOARD\n";
+                    cout << "==============================================\n" << RESET;
+
+                    cout << YELLOW;
+                    cout << left << setw(5) << " " << "A) Show all records\n";
+                    cout << left << setw(5) << " " << "B) Most frequent user\n";
+                    cout << left << setw(5) << " " << "C) Last logged user\n";
+                    cout << left << setw(5) << " " << "D) Search user by name\n";
+                    cout << left << setw(5) << " " << "E) Back to main menu\n";
+                    cout << RESET;
+                    cout << "----------------------------------------------\n";
+                    cout << " Enter your choice (A-E): ";
 
                     string input;
                     getline(cin, input);
                     input = trim(input);
-                    if (input.empty())
-                        continue;
+                    if (input.empty()) continue;
 
-                    char op = input[0];
+                    char op = toupper(input[0]);
 
-                    if (op == 'a')
-                        acl.showAll();
-                    else if (op == 'b')
-                        acl.mostFrequent();
-                    else if (op == 'c')
-                        acl.lastLogger();
-                    else if (op == 'd')
+                    switch (op)
                     {
-                        cout << "Enter name to search: ";
-                        string s;
-                        getline(cin, s);
-                        s = trim(s);
-                        acl.searchUser(s);
-                    }
-                    else if (op == 'e')
+                    case 'A':
+                        cout << GREEN << " All Access Records:\n" << RESET;
+                        acl.showAll();
                         break;
-                    else
-                        cout << "Invalid option.\n";
+                    case 'B':
+                        cout << GREEN << " Most Frequent User:\n" << RESET;
+                        acl.mostFrequent();
+                        break;
+                    case 'C':
+                        cout << GREEN << "Last Logged User:\n" << RESET;
+                        acl.lastLogger();
+                        break;
+                    case 'D':
+                        cout << "Enter name to search: ";
+                        {
+                            string s;
+                            getline(cin, s);
+                            s = trim(s);
+                            cout << GREEN << " Search Results for '" << s << "':\n" << RESET;
+                            acl.searchUser(s);
+                        }
+                        break;
+                    case 'E':
+                        cout << YELLOW << "↩ Returning to main menu...\n" << RESET;
+                        goto admin_exit;
+                    default:
+                        cout << RED << " Invalid option.\n" << RESET;
+                        break;
+                    }
+
+                    // cout << "\nPress Enter to continue...";
+                    // cin.get();
                 }
+            admin_exit:
+                continue;
             }
             else
             {
-                cout << "Wrong password.\n";
+                cout << RED << " Wrong password! Access denied.\n" << RESET;
+                // cout << "Press Enter to return...";
+                // cin.get();
             }
         }
 
         else if (choice == 3)
         {
-
-            cout << "Goodbye!\n";
+            system("cls");
+            cout << GREEN << BOLD << "\n Goodbye! Logging out...\n" << RESET;
             break;
         }
 
         else
         {
-            cout << "Invalid choice.\n";
+            cout << RED << "Invalid choice. Try again.\n" << RESET;
+            // cin.get();
         }
     }
-
     return 0;
 }
+   
