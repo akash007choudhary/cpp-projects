@@ -14,6 +14,7 @@ The **Access Log List Project** is a robust console-based system built in C++ to
 * **Case-Insensitive Login:** Usernames are handled case-insensitively (e.g., "Akash" and "AKASH" are the same user), preventing duplicate records.
 * **Automatic Time Stamping:** Every login is recorded with the **current date and time** using C++ `<chrono>` and `<ctime>`.
 * **Admin Dashboard:** A secure, password-protected menu offering advanced views and analytics.
+* **Coloured console for user using the concept of  colors in c++.
 * **Statistical Analysis:** Easily identify the **most frequent user(s)** and view the last user who logged in.
 * **Efficient Storage:** Utilizes the C++ Standard Template Library **`std::list`** for efficient in-memory record management.
 
